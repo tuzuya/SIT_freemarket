@@ -7,15 +7,17 @@ import SendBtn from "../components/SendBtn/SendBtn";
 import SerectCategory from "../components/SerectCategory/SerectCategory";
 import UserLog from "../components/UserLog/UserLog";
 import { createClient } from "@/utils/supabase/client";
-import { getName, getPeriod, getSubject} from "../components/data/arrays";
+import { getName, getPeriod, getSubject } from "../components/data/arrays";
 import styles from "./page.module.css";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 export default function PurchasePage(){
     const PageTitle ="購入する";
     const ImgSrc="/cart.png";
     const router=useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
 
     // 検索結果を受け取る箱
     const[serchReasults, setSerachResults]= useState([]);
@@ -38,56 +40,115 @@ export default function PurchasePage(){
     // supabeseからデータを取る＊asyncで時間のかかる作業を宣言し、awaitでポーズ
     const handleSubmit= async (e) =>{
         e.preventDefault();
+        //ここのFormDataは、選択ウィンドウ全体についているので、その中のすべてのラジオボタンの選択情報を取得できる
         const formData = new FormData(e.currentTarget);
-        const keyword = formData.get("key-word"); // CheckKeywordのname
-        const group0 = formData.get("group-0");   // 1つ目のアコーディオン
-        const group1 = formData.get("group-1");   // 2つ目のアコーディオン
-        const group2 = formData.get("group-2");   // 3つ目のアコーディオン
+        const keyword = formData.get("key-word") || ""; // CheckKeywordのname
+        const group0 = formData.get("group-0") || "";   // 1つ目のアコーディオン
+        const group1 = formData.get("group-1") || "";   // 2つ目のアコーディオン
+        const group2 = formData.get("group-2") || "";   // 3つ目のアコーディオン
+
+        //URLクエリの作成 -> のちのDBクエリとは別なので注意！！
+        const params = new URLSearchParams();
+        if (keyword) params.set("keyword", keyword);
+        if (group0) params.set("group0", group0);
+        if (group1) params.set("group1", group1);
+        if (group2) params.set("group2", group2);
+        const newUrl = `${pathname}?${params.toString()}`;
+        //Todo: 今後画面遷移は検索結果を見て切り替えるようにする 
+        router.push(newUrl);
+
         setSearchConditions({ keyword, group0, group1, group2 });
         console.log("検索条件：",{keyword,group0,group1,group2});
+
         // query制作
-        let query=supabase.from('merchandises').select('*');
-        if(keyword){
-            query=query.ilike('name',`%${keyword}%`);
-        }
-        if (group0) {
-            // ★【重要】'category' を1つ目のカラム名に変えてください
-            query = query.eq('course_id', group0);
-        }
+        // let query=supabase.from('merchandises').select('*');
+        // if(keyword){
+        //     query=query.ilike('name',`%${keyword}%`);
+        // }
+        // if (group0) {
+        //     // ★【重要】'category' を1つ目のカラム名に変えてください
+        //     query = query.eq('course_id', group0);
+        // }
 
-        // カテゴリ2の絞り込み（必要ならコメントアウトを外して設定）
-        if (group1) {
-            query = query.eq('semester_id', group1);
-        }
+        // // カテゴリ2の絞り込み（必要ならコメントアウトを外して設定）
+        // if (group1) {
+        //     query = query.eq('semester_id', group1);
+        // }
 
-        if (group2) {
-            query = query.eq('subject_id', group2);
-        }
+        // if (group2) {
+        //     query = query.eq('subject_id', group2);
+        // }
 
-        const {data,error} = await query;
-        if(error){
-           console.error("エラーだ！:", error);
-            alert("データの取得に失敗しました"); 
-        }else{
-            console.log("取れたデータ：",data);
+        // const {data,error} = await query;
+        // if(error){
+        //    console.error("エラーだ！:", error);
+        //     alert("データの取得に失敗しました"); 
+        // }else{
+        //     console.log("取れたデータ：",data);
+        //     if(data.length === 0){
+        //         alert("条件に合う商品はありませんでした。");
+        //     }else if(data.length===1){
+        //         // そのまま商品ページに遷移
+        //         const targetId=data[0].id;
+        //         console.log(`ID: ${targetId} のページへ飛びます`);
+        //         router.push(`/merchandises/${targetId}`);
+        //     }else {
+        //         setSearchResults(data);
+        //         setShowResults(true);
+        //     }
+        // }
+
+    };
+
+    useEffect(()=> {
+        const runSearch = async() => {
+            const keyword = searchParams.get("keyword") || "";
+            const group0 = searchParams.get("group0") || "";
+            const group1 = searchParams.get("group1") || "";
+            const group2 = searchParams.get("group2") || "";
+
+            //クエリが空なら検索画面表示
+            if(!keyword && !group0 && !group1 && !group2){
+                setShowResults(false);
+                setSearchResults([]);
+                setSearchConditions({ keyword: "", group0: "", group1: "", group2: "" });
+                return;
+            }
+
+            setSearchConditions({ keyword, group0, group1, group2 });
+
+            //DBクエリの作成
+            let query=supabase.from('merchandises').select('*');
+            if(keyword) query = query.ilike("name", `%${keyword}%`);
+            if(group0) query = query.eq("course_id", group0);
+            if(group1) query = query.eq("semester_id", group1);
+            if(group2) query = query.eq("subject_id", group2);
+
+            const {data,error} = await query;
+
+            if(error){
+                alert("データの取得に失敗しました");
+            }
+
+            //Todo: 検索ヒットが１つの場合に、戻るボタンを押すと商品ページでループするのでその修正
             if(data.length === 0){
                 alert("条件に合う商品はありませんでした。");
-            }else if(data.length===1){
-                // そのまま商品ページに遷移
-                const targetId=data[0].id;
-                console.log(`ID: ${targetId} のページへ飛びます`);
-                router.push(`/merchandises/${targetId}`);
-            }else {
+                setShowResults(false);
+                setSerachResults([]);
+            }else if(data.length === 1) {
+                router.push(`/merchandises/${data[0].id}?returnTo=${encodeURIComponent(`${pathname}?${searchParams.toString()}`)}`);
+            }else{
                 setSerachResults(data);
                 setShowResults(true);
             }
         }
 
-    };
+        runSearch();
+    }, [searchParams]);
 
     const handleBackToSearch = () => {
         setShowResults(false);
-        setSerachResults([]); // 前の結果をクリア（お好みで）
+        setSearchResults([]); // 前の結果をクリア（お好みで）
     };
 
     const detarmainName =(group,id)=>{
@@ -158,7 +219,10 @@ export default function PurchasePage(){
                 <div className={styles.resultsContainer}>
                     <h3 className={styles.resultTitle}>検索結果</h3>
                 {serchReasults.map((item)=>(
-                    <div key={item.id} className={styles.searchItem} onClick={()=>router.push(`/merchandises/${item.id}`)}>
+                    <div 
+                        key={item.id}
+                        className={styles.searchItem}
+                        onClick={()=>router.push(`/merchandises/${item.id}?returnTo=${encodeURIComponent(`${pathname}?${searchParams.toString()}`)}`)}>
                         <div className={styles.itemImg}>
                             <img 
                                 src={item.image_url ? item.image_url[0] : "/no-image.png"}

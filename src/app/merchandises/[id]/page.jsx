@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { useParams } from "next/navigation"; 
 import Header from "@/app/components/Header/Header";
 import styles from "./page.module.css";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 export default function MerchandiseDetail() {
   const PageTitle ="購入する";
@@ -11,6 +11,9 @@ export default function MerchandiseDetail() {
   const [item, setItem] = useState(null);
   const params = useParams();
   const id = params.id; // フォルダ名の [id] がここに入ってくる！
+  const router  = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -48,7 +51,7 @@ export default function MerchandiseDetail() {
           <img src={item.image_url} alt={item.description} width="200px" height="200px"/>
         </div>
         <p>商品説明：{item.description}</p>
-        <button onClick={() => window.history.back()}>戻る</button>
+        <button onClick={() => router.push(returnTo || "/purchase")}>戻る</button>
       </main>
     </>
   );
