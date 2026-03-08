@@ -11,7 +11,7 @@
     width: 100%;
 }
 
-.SerectCategorys {
+.SelectCategorys {
     display: flex;
     flex-wrap:wrap;
     justify-content: center;

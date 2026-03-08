@@ -4,7 +4,7 @@ import { options } from "../components/data/arrays";
 import Header from "../components/Header/Header";
 import RadioBtns from "../components/radioBtns/radioBtns";
 import SendBtn from "../components/SendBtn/SendBtn";
-import SerectCategory from "../components/SerectCategory/SerectCategory";
+import SelectCategory from "../components/SelectCategory/SelectCategory";
 import UserLog from "../components/UserLog/UserLog";
 import { createClient } from "@/utils/supabase/client";
 import { getName, getPeriod, getSubject } from "../components/data/arrays";
@@ -16,11 +16,14 @@ export default function PurchasePage(){
     const PageTitle ="購入する";
     const ImgSrc="/cart.png";
     const router=useRouter();
+    //useSearchParamsは、自動でURLクエリの？以降の部分を読み取って反映させてくれる。
     const searchParams = useSearchParams();
     const pathname = usePathname();
 
+    const params = new URLSearchParams();
+
     // 検索結果を受け取る箱
-    const[serchReasults, setSerachResults]= useState([]);
+    const[searchResults, setSearchResults]= useState([]);
 
     // 検索画面と商品選択画面の切り替え
 
@@ -48,14 +51,14 @@ export default function PurchasePage(){
         const group2 = formData.get("group-2") || "";   // 3つ目のアコーディオン
 
         //URLクエリの作成 -> のちのDBクエリとは別なので注意！！
-        const params = new URLSearchParams();
+        // const params = new URLSearchParams();
         if (keyword) params.set("keyword", keyword);
         if (group0) params.set("group0", group0);
         if (group1) params.set("group1", group1);
         if (group2) params.set("group2", group2);
-        const newUrl = `${pathname}?${params.toString()}`;
-        //Todo: 今後画面遷移は検索結果を見て切り替えるようにする 
-        router.push(newUrl);
+        //商品ページから戻るボタンを押したときの無限ループの防止用のフラグをparamsにセットする
+        params.set("autoOpen", "1");
+        router.push(`/purchase?${params.toString()}`);
 
         setSearchConditions({ keyword, group0, group1, group2 });
         console.log("検索条件：",{keyword,group0,group1,group2});
@@ -126,6 +129,9 @@ export default function PurchasePage(){
 
             const {data,error} = await query;
 
+            //autoOpenはboolean
+            const autoOpen = params.get("autoOpen") === "1";
+            
             if(error){
                 alert("データの取得に失敗しました");
             }
@@ -134,11 +140,12 @@ export default function PurchasePage(){
             if(data.length === 0){
                 alert("条件に合う商品はありませんでした。");
                 setShowResults(false);
-                setSerachResults([]);
-            }else if(data.length === 1) {
+                setSearchResults([]);
+            }else if(data.length === 1 && autoOpen) {
                 router.push(`/merchandises/${data[0].id}?returnTo=${encodeURIComponent(`${pathname}?${searchParams.toString()}`)}`);
+                params.set("autoOpen", "0");
             }else{
-                setSerachResults(data);
+                setSearchResults(data);
                 setShowResults(true);
             }
         }
@@ -151,7 +158,7 @@ export default function PurchasePage(){
         setSearchResults([]); // 前の結果をクリア（お好みで）
     };
 
-    const detarmainName =(group,id)=>{
+    const determineName =(group,id)=>{
         let searchOption=[];
         if (!id) return "未選択"; // IDがない場合はすぐ返す
         switch(Number(group)){
@@ -186,19 +193,19 @@ export default function PurchasePage(){
             <div className={styles.CheckKeyword}>
                 <CheckKeyword/>
             </div>
-                <div className={styles.SerectCategorys}>
+                <div className={styles.SelectCategorys}>
                     {options.map((option,index) => (
-                        <SerectCategory key={option.id} categoryWord={option.label}>
+                        <SelectCategory key={option.id} categoryWord={option.label}>
                             {option.children && option.children.length>0 ? (
                                 option.children.map((child)=>(
-                                <SerectCategory key={child.id} categoryWord={child.label} imgSorce={child.img}>
+                                <SelectCategory key={child.id} categoryWord={child.label} imgSource={child.img}>
                                     <RadioBtns items={child.items} name={`group-${index}`}></RadioBtns>
-                                </SerectCategory>
+                                </SelectCategory>
                             ))
                             ):(
                                 <RadioBtns items={option.items} name={`group-${index}`}></RadioBtns>
                             )}
-                        </SerectCategory>
+                        </SelectCategory>
                     ))}
                 </div>
                 <div className={styles.sendBtn}><SendBtn/></div>
@@ -210,15 +217,15 @@ export default function PurchasePage(){
                     <h2 className={styles.searchTitle}>検索ワード</h2>
                     <div className={styles.searchElemnts}>
                         <p className={styles.searchWord}>キーワード：{searchConditions.keyword || "未選択"}</p>
-                        <p className={styles.searchWord}>学科：{detarmainName(0,searchConditions.group0)}</p>
-                        <p className={styles.searchWord}>学期：{detarmainName(1,searchConditions.group1)}</p>
-                        <p className={styles.searchWord}>科目：{detarmainName(2,searchConditions.group2)}</p>
+                        <p className={styles.searchWord}>学科：{determineName(0,searchConditions.group0)}</p>
+                        <p className={styles.searchWord}>学期：{determineName(1,searchConditions.group1)}</p>
+                        <p className={styles.searchWord}>科目：{determineName(2,searchConditions.group2)}</p>
                     </div>
                 </div>
 
                 <div className={styles.resultsContainer}>
                     <h3 className={styles.resultTitle}>検索結果</h3>
-                {serchReasults.map((item)=>(
+                {searchResults.map((item)=>(
                     <div 
                         key={item.id}
                         className={styles.searchItem}

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef,useState } from "react";
-import styles from "./SerectCategory.module.css";
+import styles from "./SelectCategory.module.css";
 import gsap from "gsap";
 
 const closingAnim = function (content) {
@@ -22,7 +22,7 @@ const openingAnim = function (content) {
 };
 
 
-export default function SerectCategory({imgSorce,categoryWord,children}){
+export default function SelectCategory({imgSorce,categoryWord,children}){
     const contentRef = useRef(null);
     const [isOpen,setIsOpen]=useState(false);
     const handleClick=()=>{
@@ -38,8 +38,8 @@ export default function SerectCategory({imgSorce,categoryWord,children}){
     }, [isOpen]);
     return (
         <>
-            <div className={`${styles.serectCategoryBox} ${isOpen ? styles.active : ""}`}>
-                <button type="button" className={` ${styles.SerectCategory} ${isOpen ? styles.active : ""}`} onClick={handleClick}>
+            <div className={`${styles.SelectCategoryBox} ${isOpen ? styles.active : ""}`}>
+                <button type="button" className={` ${styles.SelectCategory} ${isOpen ? styles.active : ""}`} onClick={handleClick}>
                     {imgSorce && 
                     <div className={styles.categoryIconBox}>
                         <img src={imgSorce} alt={categoryWord} className={styles.categoryIcon} />
