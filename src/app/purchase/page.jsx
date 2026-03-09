@@ -16,11 +16,14 @@ export default function PurchasePage(){
     const PageTitle ="購入する";
     const ImgSrc="/cart.png";
     const router=useRouter();
-    //useSearchParamsは、自動でURLクエリの？以降の部分を読み取って反映させてくれる。
-    const searchParams = useSearchParams();
     const pathname = usePathname();
 
-    const params = new URLSearchParams();
+    //useSearchParamsは、自動でURLクエリの？以降の部分を読み取って反映させてくれる。
+    const searchParams = useSearchParams();
+    const returnToParams = new URLSearchParams(searchParams.toString());
+    returnToParams.delete("autoOpen");
+    const returnToQuery = returnToParams.toString();
+    const returnTo = returnToQuery ? `${pathname}?${returnToQuery}` : pathname;
 
     // 検索結果を受け取る箱
     const[searchResults, setSearchResults]= useState([]);
@@ -36,10 +39,6 @@ export default function PurchasePage(){
     group2: ""
     });
 
-
-    // Supabeseにアクセスする
-    const supabase=createClient();
-
     // supabeseからデータを取る＊asyncで時間のかかる作業を宣言し、awaitでポーズ
     const handleSubmit= async (e) =>{
         e.preventDefault();
@@ -51,14 +50,14 @@ export default function PurchasePage(){
         const group2 = formData.get("group-2") || "";   // 3つ目のアコーディオン
 
         //URLクエリの作成 -> のちのDBクエリとは別なので注意！！
-        // const params = new URLSearchParams();
-        if (keyword) params.set("keyword", keyword);
-        if (group0) params.set("group0", group0);
-        if (group1) params.set("group1", group1);
-        if (group2) params.set("group2", group2);
+        const nextParams = new URLSearchParams();
+        if (keyword) nextParams.set("keyword", keyword);
+        if (group0) nextParams.set("group0", group0);
+        if (group1) nextParams.set("group1", group1);
+        if (group2) nextParams.set("group2", group2);
         //商品ページから戻るボタンを押したときの無限ループの防止用のフラグをparamsにセットする
-        params.set("autoOpen", "1");
-        router.push(`/purchase?${params.toString()}`);
+        nextParams.set("autoOpen", "1");
+        router.push(`${pathname}?${nextParams.toString()}`);
 
         setSearchConditions({ keyword, group0, group1, group2 });
         console.log("検索条件：",{keyword,group0,group1,group2});
@@ -109,6 +108,9 @@ export default function PurchasePage(){
             const group0 = searchParams.get("group0") || "";
             const group1 = searchParams.get("group1") || "";
             const group2 = searchParams.get("group2") || "";
+            const autoOpen = searchParams.get("autoOpen") === "1";
+
+            const supabase=createClient();
 
             //クエリが空なら検索画面表示
             if(!keyword && !group0 && !group1 && !group2){
@@ -128,12 +130,10 @@ export default function PurchasePage(){
             if(group2) query = query.eq("subject_id", group2);
 
             const {data,error} = await query;
-
-            //autoOpenはboolean
-            const autoOpen = params.get("autoOpen") === "1";
             
             if(error){
                 alert("データの取得に失敗しました");
+                return;
             }
 
             //Todo: 検索ヒットが１つの場合に、戻るボタンを押すと商品ページでループするのでその修正
@@ -141,9 +141,12 @@ export default function PurchasePage(){
                 alert("条件に合う商品はありませんでした。");
                 setShowResults(false);
                 setSearchResults([]);
-            }else if(data.length === 1 && autoOpen) {
-                router.push(`/merchandises/${data[0].id}?returnTo=${encodeURIComponent(`${pathname}?${searchParams.toString()}`)}`);
-                params.set("autoOpen", "0");
+            }else if(data.length === 1) {
+                if(autoOpen){
+                    router.push(`/merchandises/${data[0].id}?returnTo=${encodeURIComponent(returnTo)}`);
+                }else{
+                }
+                
             }else{
                 setSearchResults(data);
                 setShowResults(true);
@@ -151,7 +154,7 @@ export default function PurchasePage(){
         }
 
         runSearch();
-    }, [searchParams]);
+    }, [searchParams, pathname, router, returnTo]);
 
     const handleBackToSearch = () => {
         setShowResults(false);
@@ -191,7 +194,10 @@ export default function PurchasePage(){
             <UserLog/>
             <form onSubmit={handleSubmit}>
             <div className={styles.CheckKeyword}>
-                <CheckKeyword/>
+                <CheckKeyword
+                    value={searchConditions.keyword}
+                    onChange={(value) => setSearchConditions({...searchConditions, keyword: value})}
+                />
             </div>
                 <div className={styles.SelectCategorys}>
                     {options.map((option,index) => (
@@ -199,11 +205,23 @@ export default function PurchasePage(){
                             {option.children && option.children.length>0 ? (
                                 option.children.map((child)=>(
                                 <SelectCategory key={child.id} categoryWord={child.label} imgSource={child.img}>
-                                    <RadioBtns items={child.items} name={`group-${index}`}></RadioBtns>
+                                    <RadioBtns 
+                                        items={child.items}
+                                        name={`group-${index}`}
+                                        //searchConditionsオブジェクト内の、group(index)という値に対応したキーを取ってきている。
+                                        //配列の中のある値が入ったインデックスを取ってきてる感じ  
+                                        selectedValue={searchConditions[`group${index}`]}
+                                        onChange={(value) => setSearchConditions((prev) => ({...prev, [`group${index}`]: value}))}
+                                    />
                                 </SelectCategory>
                             ))
                             ):(
-                                <RadioBtns items={option.items} name={`group-${index}`}></RadioBtns>
+                                <RadioBtns
+                                    items={option.items}
+                                    name={`group-${index}`}
+                                    selectedValue={searchConditions[`group${index}`]}
+                                    onChange={(value) => setSearchConditions((prev) => ({...prev, [`group${index}`]: value}))}
+                                />
                             )}
                         </SelectCategory>
                     ))}
@@ -229,7 +247,7 @@ export default function PurchasePage(){
                     <div 
                         key={item.id}
                         className={styles.searchItem}
-                        onClick={()=>router.push(`/merchandises/${item.id}?returnTo=${encodeURIComponent(`${pathname}?${searchParams.toString()}`)}`)}>
+                        onClick={()=>router.push(`/merchandises/${item.id}?returnTo=${encodeURIComponent(returnTo)}`)}>
                         <div className={styles.itemImg}>
                             <img 
                                 src={item.image_url ? item.image_url[0] : "/no-image.png"}

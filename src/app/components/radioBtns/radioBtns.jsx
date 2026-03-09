@@ -1,23 +1,32 @@
 "use client";
 import styles from "./radioBtns.module.css";
 
-export default function RadioBtns({items,name}){
-    if (!items || !Array.isArray(items)) {
-        return null;
-    }
-    return (
-        <>
-        <div className={styles.radioForm}>
-            <dl>
-                {items.map((item)=>(
-                    <dd key={item.id} className={styles.radioDd}>
-                        <input type="radio" id={item.id} name={name} value={item.forSearch}/>
-                        <label htmlFor={item.id} className={styles.radioLabel}>{item.label}</label>
-                    </dd>
-                ))}
-            </dl>
+export default function RadioBtns({ items, name, selectedValue = "", onChange }) {
+  if (!items || !Array.isArray(items)) return null;
 
-        </div>
-        </>
-    );
+  return (
+    <div className={styles.radioForm}>
+      <dl>
+        {items.map((item) => {
+          const inputId = `${name}-${item.id}`;
+          return (
+            //ddタグは、その項目の説明なので、keyとしてinputIdを使うことでほかのラジオボタンと区別できるようにする
+            <dd key={inputId} className={styles.radioDd}>
+              <input
+                type="radio"
+                id={inputId}
+                name={name}
+                value={item.forSearch}
+                checked={String(selectedValue) === String(item.forSearch)}
+                onChange={(e) => onChange?.(e.target.value)}
+              />
+              <label htmlFor={inputId} className={styles.radioLabel}>
+                {item.label}
+              </label>
+            </dd>
+          );
+        })}
+      </dl>
+    </div>
+  );
 }

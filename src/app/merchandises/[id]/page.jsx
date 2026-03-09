@@ -51,7 +51,7 @@ export default function MerchandiseDetail() {
           <img src={item.image_url} alt={item.description} width="200px" height="200px"/>
         </div>
         <p>商品説明：{item.description}</p>
-        <button onClick={() => router.push(returnTo || "/purchase")}>戻る</button>
+        <button onClick={() => router.push(returnTo)}>戻る</button>
       </main>
     </>
   );
