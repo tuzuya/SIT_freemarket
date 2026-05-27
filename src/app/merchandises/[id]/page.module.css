@@ -1,0 +1,107 @@
+.headerWrapper {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.main {
+    padding: 20px 16px 40px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.imageContainer {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--gray-color);
+    margin-bottom: 20px;
+}
+
+.imageContainer img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.infoSection {
+    margin-bottom: 20px;
+}
+
+.name {
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    color: var(--black-color);
+}
+
+.price {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 12px;
+}
+
+.stateBadge {
+    display: inline-block;
+    padding: 4px 14px;
+    background: var(--white-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--primary-color);
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid var(--gray-color);
+    margin: 20px 0;
+}
+
+.descriptionSection {
+    margin-bottom: 32px;
+}
+
+.descriptionLabel {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+}
+
+.description {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--black-color);
+    white-space: pre-wrap;
+}
+
+.backButton {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: 2px solid var(--primary-color);
+    background: var(--white-color);
+    color: var(--primary-color);
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.backButton:hover {
+    background: var(--primary-color);
+    color: var(--white-color);
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    font-size: 16px;
+    color: #888;
+}
