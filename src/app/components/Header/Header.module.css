@@ -3,44 +3,11 @@
     position: relative;
 }
 
-.HeaderMeta{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-}
-
-.HeaderTime {
-    color:var(--white-color);
-    font-size: 17px;
-}
-
-.HeaderSignalPlaceholder{
-    display: flex;
-    gap: 7px;
-}
-
-.HeaderSignals {
-    height: 12.5px;
-}
-
-.HeaderSignalMobile{
-    width: 19px;
-}
-
-.HeaderSignalWifi{
-    width: 17px;
-}
-
-.HeaderSignalBattery{
-    width: 27px;
-}
-
 .HeaderTitleHolder{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 12px;
+    padding: 12px;
 }
 
 .HeaderTitles{
