@@ -11,7 +11,7 @@
     width: 100%;
 }
 
-.SerectCategorys {
+.SelectCategorys {
     display: flex;
     flex-wrap:wrap;
     justify-content: center;
@@ -24,4 +24,75 @@
     position:fixed;
     bottom:32px;
     right:20px;
+}
+
+
+.searchWords{
+    width: 90%;
+    margin: 16px auto 0 auto;
+    background: var(--gray-color);
+    padding: 8px;
+}
+
+.searchElemnts{
+    margin-top: 16px;
+}
+
+.searchWord{
+    border-bottom: 1px solid var(--primary-color);
+}
+
+.searchWord:not(:first-child){
+    margin-top: 8px;
+}
+
+.resultsContainer{
+    margin-top: 48px;
+}
+
+.resultTitle{
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.searchItem{
+    display: flex;
+    gap:16px;
+    padding:8px;
+    width: 95%;
+    margin: 0 auto;
+    background: var(--gray-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 10px;
+}
+
+.searchItem:not(:first-child){
+    margin-top: 16px;
+}
+
+.itemImg img{
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+.itemInfo{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.itemPrice{
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.backButton{
+    display: block;
+    margin: 16px auto;
+    font-size: 16px;
+    padding: 8px 16px;
+    border: 2px solid var(--primary-color);
 }
