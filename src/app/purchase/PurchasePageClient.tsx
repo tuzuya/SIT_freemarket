@@ -233,26 +233,28 @@ export default function PurchasePageClient() {
 
                     <div className={styles.resultsContainer}>
                         <h3 className={styles.resultTitle}>検索結果</h3>
-                        {searchResults.map((item) => (
-                            <div
-                                key={item.id}
-                                className={styles.searchItem}
-                                onClick={() =>
-                                    router.push(`/merchandises/${item.id}?returnTo=${encodeURIComponent(returnTo)}`)
-                                }
-                            >
-                                <div className={styles.itemImg}>
-                                    <img
-                                        src={item.image_url ? item.image_url[0] : "/no-image.png"}
-                                        alt={item.image_url ? item.name : "写真はありません"}
-                                    />
+                        <div className={styles.resultsGrid}>
+                            {searchResults.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className={styles.searchItem}
+                                    onClick={() =>
+                                        router.push(`/merchandises/${item.id}?returnTo=${encodeURIComponent(returnTo)}`)
+                                    }
+                                >
+                                    <div className={styles.itemImg}>
+                                        <img
+                                            src={item.image_url ? item.image_url[0] : "/no-image.png"}
+                                            alt={item.image_url ? item.name : "写真はありません"}
+                                        />
+                                    </div>
+                                    <div className={styles.itemInfo}>
+                                        <h3 className={styles.itemName}>{item.name}</h3>
+                                        <p className={styles.itemPrice}>￥{item.price}</p>
+                                    </div>
                                 </div>
-                                <div className={styles.itemInfo}>
-                                    <h3 className={styles.itemName}>{item.name}</h3>
-                                    <p className={styles.itemPrice}>￥{item.price}</p>
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                     <button className={styles.backButton} onClick={handleBackToSearch}>
                         検索に戻る
