@@ -165,8 +165,16 @@ SellPage
 
 | テーブル名 | 主なカラム |
 |-----------|-----------|
-| `merchandises` | `id`, `name`, `price`, `image_url[]`, `description`, `seller_id`, `course_id`, `semester_id`, `subject_id`, `state_id`, `deliveryMethod_id` |
-| `profiles` | `id`（auth.usersのUUID）, `user_name` |
+| `merchandises` | `id`, `name`, `price`, `image_url text[]`, `description`, `seller_id uuid`, `course_id`, `semester_id`, `subject_id`, `state_id`, `deliveryMethod_id`, `status text (available/pending/trading/sold)` ※ feature/purchase-flow, `buyer_id uuid` ※ feature/purchase-flow |
+| `profiles` | `id uuid`（auth.usersのUUID）, `user_name text` |
+| `favorites` | `user_id uuid references auth.users(id)`, `merchandise_id uuid references merchandises(id)` |
+| `transactions` | `id`, `merchandise_id uuid`, `buyer_id uuid`, `seller_id uuid`, `delivery_method text (anonymous/leave)`, `status text (pending/trading/completed)`, `created_at timestamptz` ※ feature/purchase-flow ブランチで実装 |
+
+### Supabase Storage バケット
+
+| バケット名 | 用途 |
+|-----------|------|
+| `images` | 商品画像のアップロード先（SellForm.tsx） |
 
 ---
 
