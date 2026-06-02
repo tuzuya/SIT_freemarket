@@ -40,11 +40,10 @@ export default function PurchasePageClient() {
     const returnToQuery = returnToParams.toString();
     const returnTo = returnToQuery ? `${pathname}?${returnToQuery}` : pathname;
 
-    // 検索結果を受け取る箱
     const [searchResults, setSearchResults] = useState<MerchandiseItem[]>([]);
-
-    // 検索画面と商品選択画面の切り替え
     const [showResults, setShowResults] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
     const [searchConditions, setSearchConditions] = useState<SearchConditions>({
         keyword: "",
@@ -131,6 +130,41 @@ export default function PurchasePageClient() {
 
         runSearch();
     }, [searchParams, pathname, router, returnTo]);
+
+    useEffect(() => {
+        const fetchUserAndFavorites = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            setUserId(user.id);
+
+            const { data } = await supabase
+                .from("favorites")
+                .select("merchandise_id")
+                .eq("user_id", user.id);
+
+            if (data) {
+                setFavoriteIds(new Set(data.map((f) => f.merchandise_id)));
+            }
+        };
+        fetchUserAndFavorites();
+    }, []);
+
+    const toggleFavorite = async (e: React.MouseEvent, merchandiseId: string) => {
+        e.stopPropagation();
+        if (!userId) return;
+        const supabase = createClient();
+
+        if (favoriteIds.has(merchandiseId)) {
+            await supabase.from("favorites").delete()
+                .eq("user_id", userId)
+                .eq("merchandise_id", merchandiseId);
+            setFavoriteIds((prev) => { const next = new Set(prev); next.delete(merchandiseId); return next; });
+        } else {
+            await supabase.from("favorites").insert({ user_id: userId, merchandise_id: merchandiseId });
+            setFavoriteIds((prev) => new Set(prev).add(merchandiseId));
+        }
+    };
 
     const handleBackToSearch = () => {
         setShowResults(false);
@@ -250,7 +284,20 @@ export default function PurchasePageClient() {
                                     </div>
                                     <div className={styles.itemInfo}>
                                         <h3 className={styles.itemName}>{item.name}</h3>
-                                        <p className={styles.itemPrice}>￥{item.price}</p>
+                                        <div className={styles.itemBottom}>
+                                            <p className={styles.itemPrice}>￥{item.price}</p>
+                                            {userId && (
+                                                <button
+                                                    className={`${styles.favoriteBtn} ${favoriteIds.has(String(item.id)) ? styles.favorited : ""}`}
+                                                    onClick={(e) => toggleFavorite(e, String(item.id))}
+                                                    aria-label={favoriteIds.has(String(item.id)) ? "お気に入り解除" : "お気に入り登録"}
+                                                >
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill={favoriteIds.has(String(item.id)) ? "#e63946" : "none"} stroke={favoriteIds.has(String(item.id)) ? "#e63946" : "#bbb"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                                    </svg>
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
