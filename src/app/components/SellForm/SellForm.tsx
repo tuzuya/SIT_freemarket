@@ -70,6 +70,17 @@ interface ImageItem {
     previewUrl: string;
 }
 
+// アップロードを許可する画像形式と、保存時の拡張子。
+// 拡張子はファイル名ではなく MIME タイプから決める（"evil.html" を画像として選ばせる手口を防ぐ）
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+};
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_PRICE = 1_000_000;
+
 export default function SellForm(){
     const [ bookName, setBookName] = useState("");
     // const [ imageFile, setImageFile ] = useState(null);
@@ -97,10 +108,21 @@ export default function SellForm(){
             return;
         }
 
+        // accept="image/*" は選択ダイアログの絞り込みにすぎないので、ここでも形式とサイズを確認する
+        if(files.some((file) => !(file.type in ALLOWED_IMAGE_TYPES))){
+            alert("JPEG・PNG・WebP・GIF のみアップロードできます");
+            e.target.value = "";
+            return;
+        }
+        if(files.some((file) => file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024)){
+            alert(`画像は1枚あたり${MAX_IMAGE_SIZE_MB}MB以下にしてください`);
+            e.target.value = "";
+            return;
+        }
+
         //プレビュー用URLを作ってStateに追加
         const newImages = files.map((file) => {
             const url = URL.createObjectURL(file);
-            console.log("生成されたURL:", url);
             return {
                 file: file,
                 previewUrl: url
@@ -113,8 +135,6 @@ export default function SellForm(){
         // 変更後: e.target.value = "";
         // 理由: TypeScriptではstring型のプロパティにnullは代入できないため
         e.target.value = "";
-
-        console.log("現在の画像リスト:", images);
     };
 
     const removeImage = (indexToRemove: number) => {
@@ -131,6 +151,11 @@ export default function SellForm(){
             if(!user) throw new Error("ログインしていません");
             if(images.length === 0) throw new Error("画像が選択されていません");
 
+            const priceNum = Number(price);
+            if(!Number.isInteger(priceNum) || priceNum <= 0 || priceNum > MAX_PRICE){
+                throw new Error(`価格は1円以上${MAX_PRICE.toLocaleString()}円以下の整数で入力してください`);
+            }
+
             //supabaseのidを使う項目については、stateで管理しているものから変換する
             const subjectId = SUBJECT_MAP[bookSubject];
             const stateId = STATE_MAP[bookState];
@@ -145,8 +170,10 @@ export default function SellForm(){
             if(!semesterId) throw new Error(`学期IDが見つかりません: ${semester}`);
 
             const uploadPromises = images.map(async(img) => {
-                const fileExt = img.file.name.split(".").pop();
-                const fileName = `${Math.random().toString(32).substring(2)}.${fileExt}`;
+                // 推測・衝突しにくい UUID を使い、ユーザーごとのフォルダに分ける
+                // （Storage のポリシーで auth.uid() とフォルダ名を照合できるようにするため）
+                const fileExt = ALLOWED_IMAGE_TYPES[img.file.type];
+                const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
                 //画像アップロード
                 const { error: uploadError } = await supabase
@@ -166,27 +193,13 @@ export default function SellForm(){
 
             const uploadUrls = await Promise.all(uploadPromises);
 
-            const insertData = {
-                title: bookName,
-                price: Number(price),
-                image_url: uploadUrls,
-                seller_id: user.id,
-                description: description,
-                subject_id: subjectId,
-                state_id: stateId,
-                delivery_method_id: deliveryMethodId,
-                course_id: courseId,
-                semester_id: semesterId
-            };
-            console.log("【送信データ確認】", insertData);
-
             const { error: insertError } = await supabase
                 .from("merchandises")
                 .insert({
                     name: bookName,
                     image_url: uploadUrls,
                     seller_id: user.id,
-                    price: Number(price),
+                    price: priceNum,
                     description: description,
 
                     subject_id: subjectId,
@@ -195,6 +208,9 @@ export default function SellForm(){
                     course_id: courseId,
                     semester_id: semesterId
                 })
+
+            // 保存に失敗したのに「完了」と表示しないよう、エラーなら catch へ回す
+            if(insertError) throw insertError;
 
             //出品完了後の処理
             alert("出品が完了しました！");
@@ -307,6 +323,9 @@ export default function SellForm(){
                     <label className={styles.label}>希望価格 (円)</label>
                     <input
                         type="number"
+                        min={1}
+                        max={MAX_PRICE}
+                        step={1}
                         className={styles.input}
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}

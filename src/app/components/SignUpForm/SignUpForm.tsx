@@ -146,7 +146,6 @@ export default function SignUpForm(){
         // ★注意：以前ここにあった supabaseRegistration(...) は削除しました
         // ここにあると、エラーがあっても実行されてしまっていました。
 
-        console.log("入力されたデータ:", values);
     }
 
     const handleChange = (fieldName: keyof FormValues, newValue: string) => {
