@@ -1,19 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
-  reactCompiler: true, // 元の設定は残します
-
-  // ▼▼▼ ここから追加 ▼▼▼
-  // 1. ESLintの警告・エラーを無視してビルドする
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  
-  // 2. TypeScriptの型エラーを無視してビルドする
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  // ▲▲▲ ここまで追加 ▲▲▲
+  reactCompiler: true,
+  // 型エラー・lint エラーを無視する設定は削除した（型エラー0を確認済み）。
+  // エラーがあるとビルドが止まるので、バグを本番に出す前に気づける
 };
 
 export default nextConfig;
