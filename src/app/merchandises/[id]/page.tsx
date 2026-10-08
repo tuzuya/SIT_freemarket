@@ -22,7 +22,11 @@ export default function MerchandiseDetail() {
   const id = params.id; // フォルダ名の [id] がここに入ってくる！
   const router  = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  // 外部サイトへ飛ばされないよう、自サイト内のパスだけを許可する（オープンリダイレクト対策）。
+  // "//evil.com" や "/\evil.com" はブラウザが外部URLとして解釈するので弾く
+  const rawReturnTo = searchParams.get("returnTo");
+  const returnTo =
+    rawReturnTo && /^\/(?![\/\\])/.test(rawReturnTo) ? rawReturnTo : "/purchase";
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -48,7 +52,6 @@ export default function MerchandiseDetail() {
   }, [id]);
 
   if (!item) return <div>読み込み中... (ID: {id})</div>;
-  console.log(item);
   return (
     <>
       <Header pageTitle={PageTitle} imgSrc={ImgSrc}/>
@@ -60,9 +63,7 @@ export default function MerchandiseDetail() {
           <img src={item.image_url[0]} alt={item.description} width="200px" height="200px"/>
         </div>
         <p>商品説明：{item.description}</p>
-        {/* 変更前: router.push(returnTo) / 変更後: router.push(returnTo ?? "/")
-            理由: TypeScriptではreturnToがnullになりうるため、nullの場合は"/"にフォールバックするよう変更 */}
-        <button onClick={() => router.push(returnTo ?? "/")}>戻る</button>
+        <button onClick={() => router.push(returnTo)}>戻る</button>
       </main>
     </>
   );

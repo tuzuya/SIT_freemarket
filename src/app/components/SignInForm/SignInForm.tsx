@@ -83,7 +83,7 @@ export default function SignInForm(){
             }
 
             if(data.user){
-                console.log("ログイン成功, purchaseページへ遷移:", data.user);
+                console.log("ログイン成功, purchaseページへ遷移");
                 router.push("/purchase");
                 // 成功時は画面遷移するので setIsLoading(false) はしなくてOK
             }
@@ -120,8 +120,6 @@ export default function SignInForm(){
             console.log("バリデーション成功");
             await supabaseAuthentication(values.email, values.password);
         }
-
-        console.log("入力されたデータ:", values);
     }
 
     const handleChange = (fieldName: keyof FormValues, newValue: string) => {
