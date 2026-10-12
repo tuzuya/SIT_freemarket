@@ -1,10 +1,12 @@
 # 芝浦教科書フリマ — エージェント向けメモ
 
-最終更新: 2026-09-09（このファイルは実装のたびに更新すること。ルールは末尾参照）
+最終更新: 2026-09-19（このファイルは実装のたびに更新すること。ルールは末尾参照）
 
 芝浦工業大学の学生限定・教科書フリマアプリ。Next.js 16 (App Router) + React 19 + TypeScript、
 バックエンドは Supabase（Auth / PostgreSQL / Storage）。詳細な設計・機能一覧は以下を参照:
 
+- `REQUIREMENTS.md` — 要件定義書（コードから再構成。🔴 は要チーム合意の未確定事項）
+- `TECH_SELECTION.md` — 技術選定書・移行比較検討（Supabase / 認証 / ホスティングの代替案評価）
 - `ARCHITECTURE.md` — ディレクトリ構成・技術選定
 - `FUNCTIONS.md` — 実装済み関数・コンポーネントの詳細
 - `SECURITY_REVIEW.md` — セキュリティ監査結果（このファイルの「既知のセキュリティ課題」は要約）
@@ -64,6 +66,10 @@
 
 ## 既知のセキュリティ課題（未修正・詳細は SECURITY_REVIEW.md）
 
+- **HIGH** 学内メールドメイン検証がクライアント側のみ — `validateEmail.ts` の正規表現だけで、公開 anon key で API を直接叩けば
+  任意のメールアドレスで登録可能。**「芝浦の学生限定」というアプリの前提そのものが技術的に担保されていない**（2026-09-19 追記）
+- **HIGH** データアクセスが全て Client Component からの anon key 直叩き — アクセス制御が Supabase の RLS 設定に100%依存し、
+  そのRLSが設定済みか未検証。`sell/edit/[id]` の `seller_id` チェックは画面表示の判定のみで UPDATE を防いでいない（2026-09-19 追記）
 - **HIGH** オープンリダイレクト — `returnTo` クエリを未検証のまま遷移先に使用
 - **HIGH** 認証ガードの穴 — `middleware.ts` の `matcher` が `/` と `/purchase` のみ。`/sell`・`/merchandises` は未ログインでもアクセス可能
 - **MED** 出品時の DB insert エラーを無視して「出品完了」表示（`SellForm.tsx:183`）
