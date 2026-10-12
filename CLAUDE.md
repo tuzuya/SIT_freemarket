@@ -1,6 +1,6 @@
 # 芝浦教科書フリマ — エージェント向けメモ
 
-最終更新: 2026-09-19（このファイルは実装のたびに更新すること。ルールは末尾参照）
+最終更新: 2026-10-12（このファイルは実装のたびに更新すること。ルールは末尾参照）
 
 芝浦工業大学の学生限定・教科書フリマアプリ。Next.js 16 (App Router) + React 19 + TypeScript、
 バックエンドは Supabase（Auth / PostgreSQL / Storage）。詳細な設計・機能一覧は以下を参照:
@@ -64,19 +64,17 @@
 - [ ] テスト（unit/e2e）・CI設定 — 現状ゼロ
 - [ ] 下記セキュリティ課題の解消
 
-## 既知のセキュリティ課題（未修正・詳細は SECURITY_REVIEW.md）
+## 既知のセキュリティ課題（詳細は SECURITY_REVIEW.md）
 
-- **HIGH** 学内メールドメイン検証がクライアント側のみ — `validateEmail.ts` の正規表現だけで、公開 anon key で API を直接叩けば
-  任意のメールアドレスで登録可能。**「芝浦の学生限定」というアプリの前提そのものが技術的に担保されていない**（2026-09-19 追記）
+コードで直せるもの（オープンリダイレクト・`/sell`・`/merchandises` の認証ガード・出品時のエラー無視・価格検証・
+画像ファイル名・ログへの機密出力・ビルドエラー無視）は対応済み（SECURITY_REVIEW.md #1〜#8、2026-10-12 にコードで確認）。
+残っているのは Supabase 側の対応:
+
+- **HIGH** 学内メールドメイン検証がクライアント側のみ — `auth.users` へのトリガーで拒否する SQL を
+  `supabase/migrations/20261012000000_restrict_signup_email_domain.sql` に用意した。**Supabase の SQL Editor で適用するまでは未解消**
 - **HIGH** データアクセスが全て Client Component からの anon key 直叩き — アクセス制御が Supabase の RLS 設定に100%依存し、
-  そのRLSが設定済みか未検証。`sell/edit/[id]` の `seller_id` チェックは画面表示の判定のみで UPDATE を防いでいない（2026-09-19 追記）
-- **HIGH** オープンリダイレクト — `returnTo` クエリを未検証のまま遷移先に使用
-- **HIGH** 認証ガードの穴 — `middleware.ts` の `matcher` が `/` と `/purchase` のみ。`/sell`・`/merchandises` は未ログインでもアクセス可能
-- **MED** 出品時の DB insert エラーを無視して「出品完了」表示（`SellForm.tsx:183`）
-- **MED** 価格バリデーション無し（負値・0円・桁外れが登録可能）
-- **MED** 画像ファイル名に `Math.random()` 使用（衝突リスク、`crypto.randomUUID()` 未使用）
-- **LOW** メール・パスワードを平文で `console.log` している箇所がある
-- **LOW** `next.config.mjs` で TypeScript / ESLint のビルドエラーを無視する設定のまま
+  そのRLSが設定済みか未検証。`sell/edit/[id]` の `seller_id` チェックは画面表示の判定のみで UPDATE を防いでいない
+- **MED** 画像のMIMEタイプ・サイズ制限がブラウザ側のみ — Storage バケット側の設定で制限が必要
 
 ## 運用ルール（このファイルの更新方法）
 
