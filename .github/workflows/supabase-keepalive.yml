@@ -1,0 +1,43 @@
+# Supabase 無料プランは 7 日間アクセスが無いとプロジェクトが一時停止されるため、
+# 3 日ごとに REST API 経由で軽い SELECT を 1 件投げて稼働状態を保つ。
+#
+# 必要な Repository secrets（Settings > Secrets and variables > Actions）:
+#   SUPABASE_URL       … .env.local の NEXT_PUBLIC_SUPABASE_URL と同じ値
+#   SUPABASE_ANON_KEY  … .env.local の NEXT_PUBLIC_SUPABASE_ANON_KEY と同じ値
+#
+# 注意: schedule はデフォルトブランチ（main）にマージされて初めて動く。
+name: Supabase keepalive
+
+on:
+  schedule:
+    # 毎月 1, 4, 7, ... 日の 03:00 UTC（12:00 JST）。月またぎでも間隔は最大 3 日
+    - cron: "0 3 */3 * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query merchandises (limit 1)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL / SUPABASE_ANON_KEY が secrets に設定されていません"
+            exit 1
+          fi
+          # RLS で 0 件が返っても DB へのクエリ自体は発生するので 200 なら成功とみなす
+          status=$(curl -sS -o /dev/null -w "%{http_code}" \
+            --retry 3 --retry-delay 10 \
+            "${SUPABASE_URL%/}/rest/v1/merchandises?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "HTTP ${status}"
+          if [ "$status" != "200" ]; then
+            echo "::error::Supabase への keepalive クエリが失敗しました (HTTP ${status})"
+            exit 1
+          fi
