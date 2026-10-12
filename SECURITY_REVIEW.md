@@ -1,6 +1,6 @@
 # セキュリティレビュー
 
-最終更新: 2026-10-09（コードで直せる #1〜#8 は対応済み。Supabase 側の設定確認は未完了）
+最終更新: 2026-10-12（コードで直せる #1〜#8 は対応済み。#9 は SQL を用意済みで Supabase への適用待ち。Supabase 側の設定確認は未完了）
 
 ---
 
@@ -23,6 +23,7 @@
 | 6 | **中** | `SellForm.tsx:268` | 画像MIMEタイプの検証がブラウザ側のみ | ✅ MIME タイプとサイズ（5MB）を選択時に検証。拡張子も MIME から決定。**サーバー側の制限は Storage バケット設定で要対応** |
 | 7 | **低** | 複数ファイル | `console.log` にメールアドレス・パスワード・ユーザー情報を出力 | ✅ パスワード・ユーザー情報・出品データ・商品データを出すログを削除 |
 | 8 | **低** | `next.config.mjs` | `ignoreBuildErrors: true` でセキュリティバグを見逃すリスク | ✅ 両オプションを削除（型エラー0・lint エラー0を確認） |
+| 9 | **高** | `validateEmail.ts` / Supabase Auth | 学内メールの制限が画面側のみ。anon key で Auth API を直接叩けば任意のメールで登録できる | 🟡 `auth.users` へのトリガーで拒否する SQL を追加（`supabase/migrations/20261012000000_restrict_signup_email_domain.sql`）。**Supabase の SQL Editor で適用が必要** |
 
 ---
 
@@ -326,9 +327,10 @@ export default nextConfig;
 
 ## Supabase側で確認すべき設定（コードから確認不可）
 
-> **未完了**: Supabase プロジェクトが停止中のため未確認。再開時に必ず確認すること。
-> 学内メール（`@shibaura-it.ac.jp`）の制限もクライアント側のみで、Supabase Auth の API を直接呼べば回避できる。
-> サーバー側（Auth Hook や `auth.users` へのトリガー）での制限も合わせて検討する。
+> **未完了**: 下表の項目はまだ確認していない。
+> 学内メール（`@shibaura-it.ac.jp`）の制限は、`auth.users` へのトリガーで DB 側でも拒否する SQL を用意した（#9）。
+> `supabase/migrations/20261012000000_restrict_signup_email_domain.sql` を SQL Editor で実行すれば有効になる。
+> 適用前に大学以外のメールで登録されたユーザーがいないかは、同ファイル末尾のクエリで確認できる。
 
 以下はダッシュボードで確認・設定する項目。コードだけでは判断できないが重要。
 
