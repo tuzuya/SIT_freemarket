@@ -40,20 +40,20 @@
     <td width="50%"><img src="docs/screenshots/4-results.webp" width="420" alt="検索結果の一覧"></td>
   </tr>
   <tr>
-    <td>授業の教科書は学科ごとに決まっているので、自分のコースを選ぶだけで候補が絞れる</td>
+    <td>キーワードと組み合わせて、自分のコースを選ぶだけで候補が絞れる（授業の教科書は学科ごとに決まっているため）</td>
     <td>選んだ条件と、該当する教科書が並ぶ。条件は URL に保存され、詳細から戻っても消えない</td>
   </tr>
   <tr>
     <th>5. 商品の詳細</th>
-    <th></th>
+    <th>6. 出品する</th>
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/5-detail.webp" width="420" alt="商品詳細画面"></td>
-    <td></td>
+    <td width="50%"><img src="docs/screenshots/6-sell.webp" width="420" alt="出品画面"></td>
   </tr>
   <tr>
     <td>価格・画像に加えて、出品者が「どの授業で使ったか」を書ける</td>
-    <td></td>
+    <td>科目・使用したコース・学期を選んで出品する。ここで選んだ内容が、検索の絞り込みに使われる</td>
   </tr>
 </table>
 
